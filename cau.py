@@ -195,7 +195,7 @@ def lotre(tg_info):
     else:
         print(f"{Fore.RED}Failed to perform lotre action because authentication failed.{Fore.RESET}")
         return None
-    
+
     # Verifikasi remain_lottery_count sebelum melakukan lotre
     user_info = user_detail(tg_info)
     if user_info:
@@ -204,28 +204,45 @@ def lotre(tg_info):
             print(f"{Fore.RED}Not enough lottery attempts remaining ({remain_lottery_count}).{Fore.RESET}")
             return
 
-    # Konfirmasi sebelum melakukan lotre
-    confirm_lotre = input(Fore.BLACK + f"Apakah Anda ingin melakukan lotre untuk akun ini? (y/n): ")
-    if confirm_lotre.lower() == 'y':
-        body = {}
+    body = {}
 
-        try:
-            response = requests.post(url, headers=headers, json=body)
-            response.raise_for_status()  # Raise exception for bad status codes
-            
-            # Mendapatkan data dari respons
-            data = response.json().get('data', {})
-            name = data.get('name', 'Unknown')
-            rarity = data.get('rarity', 'Unknown')
-            sell_exchange_peel = data.get('sell_exchange_peel', 0)
-            sell_exchange_usdt = data.get('sell_exchange_usdt', 0)
+    try:
+        response = requests.post(url, headers=headers, json=body)
+        response.raise_for_status()  # Raise exception for bad status codes
+        
+        # Mendapatkan data dari respons
+        data = response.json().get('data', {})
+        name = data.get('name', 'Unknown')
+        rarity = data.get('rarity', 'Unknown')
+        sell_exchange_peel = data.get('sell_exchange_peel', 0)
+        sell_exchange_usdt = data.get('sell_exchange_usdt', 0)
 
-            # Print success message dengan detail
-            print(f"{Fore.GREEN}Selamat! Anda mendapatkan {name} dengan rarity {rarity}.")
-            print(f"{Fore.GREEN}Sell Exchange Peel: {sell_exchange_peel}")
-            print(f"{Fore.GREEN}Sell Exchange USDT: {sell_exchange_usdt}")
-        except requests.exceptions.RequestException as e:
-            print(f"{Fore.RED}Error during lottery action: {e}{Fore.RESET}")
+        # Print success message dengan detail
+        print(f"{Fore.GREEN}Selamat! Anda mendapatkan {name} dengan rarity {rarity}.")
+        print(f"{Fore.GREEN}Sell Exchange Peel: {sell_exchange_peel}")
+        print(f"{Fore.GREEN}Sell Exchange USDT: {sell_exchange_usdt}")
+    except requests.exceptions.RequestException as e:
+        print(f"{Fore.RED}Error during lottery action: {e}{Fore.RESET}")
+
+def claim_token_lottery(tg_info):
+    url = "https://interface.carv.io/banana/claim_lottery"
+    token = get_token(tg_info)
+    if not token:
+        print(f"{Fore.RED}Failed to get token. Cannot claim lottery.{Fore.RESET}")
+        return None
+    
+    headers['authorization'] = f"Bearer {token}"
+    body = {
+        "claimLotteryType": 1
+    }
+
+    try:
+        response = requests.post(url, headers=headers, json=body)
+        response.raise_for_status()  # Raise exception for bad status codes
+        return response.json()
+    except requests.exceptions.RequestException as e:
+        print(f"{Fore.RED}Error claiming lottery token: {e}{Fore.RESET}")
+        return None
 
 def print_welcome_message():
     """Function to print a welcome message."""
@@ -236,22 +253,22 @@ def print_welcome_message():
 ▒█▄▄▄█ █▄▄█ ░░░█░ ▒█░░▀█
           """)
     print(Fore.GREEN + Style.BRIGHT + "Banana BOT")
-    print(Fore.RED + Style.BRIGHT + "Jangan di edit la bang :)\n\n")
+    print(Fore.RED + Style.BRIGHT + "Jangan di edit la bang :)\n\n")                
 
 def main():
     tg_info_list = read_tginfo_from_file()
     if not tg_info_list:
+        print(f"{Fore.RED}No TG info found in the file.{Fore.RESET}")
         return
 
-    # Dictionary untuk menyimpan detail akun
+    # Dictionary to store account details
     account_details = {}
 
-    # Proses setiap akun dengan nomor urut
     for index, tg_info in enumerate(tg_info_list, start=1):
         clear_screen()
         print_welcome_message()
         
-        # 1. Tanyakan apakah ingin melakukan clear task
+        # 1. Konfirmasi Clear Task
         confirm_clear = input(Fore.WHITE + f"Apakah Anda ingin melakukan clear task otomatis untuk akun nomor {index}? (y/n): ")
         if confirm_clear.lower() == 'y':
             auth_response = auth(tg_info)
@@ -266,7 +283,6 @@ def main():
                         clear_result = clear_task(tg_info, quest['quest_id'])
                         if clear_result:
                             print(f"{Fore.GREEN}Task with ID {quest['quest_id']} cleared successfully.{Fore.RESET}")
-                            
                             claim_result = claim_task(tg_info, quest['quest_id'])
                             if claim_result:
                                 print(f"{Fore.GREEN}Task with ID {quest['quest_id']} claimed successfully.{Fore.RESET}")
@@ -279,14 +295,28 @@ def main():
             else:
                 print(f"{Fore.RED}Authentication failed for account number {index}.{Fore.RESET}")
 
-        # 3. Tampilkan detail akun
+         # 2. Auto Claim Token Lottery
+        print(f"\nMengklaim token lotre untuk akun nomor {index}...")
+        result = claim_token_lottery(tg_info)
+        if result:
+            status_code = result.get('code')
+            if status_code == 200:
+                print(f"{Fore.GREEN}Claim successful{Fore.RESET}")
+            elif status_code == 0:
+                print(f"{Fore.RED}Claim failed{Fore.RESET}")
+            else:
+                print(f"{Fore.YELLOW}Unexpected response code: {status_code}{Fore.RESET}")
+        else:
+            print(f"{Fore.RED}Failed to claim token lottery.{Fore.RESET}")
+
+        # 3. Tampilkan Detail Akun
         print(Fore.WHITE + f"\n=============== Detail akun nomor {index} : ===============\n")
         auth_response = auth(tg_info)
         if auth_response:
             user_info = user_detail(tg_info)
             if user_info:
                 try:
-                    # Simpan detail akun dalam dictionary
+                    # Save account details in dictionary
                     account_details[index] = {
                         "username": user_info['data']['username'],
                         "peel": user_info['data']['peel'],
@@ -308,23 +338,34 @@ def main():
             print(Fore.WHITE + f"Banana Name : {details['banana_name']}")
             print(Fore.WHITE + f"Daily Limit : {details['daily_limit']}")
             print(Fore.WHITE + f"Lotre       : {details['lotre']}")
-            print((Fore.WHITE + f"\n=============== Auto Click ===============\n"))
+            print(Fore.WHITE + f"\n=============== Auto Click ===============\n")
         else:
             print(Fore.RED + f"No account details to display for account number {index}.{Fore.RESET}")
 
-        # 4. Tanyakan apakah ingin melakukan auto click untuk akun ini
+        # 4. Konfirmasi Auto Click
         confirm_auto_click = input(Fore.WHITE + f"Apakah Anda ingin menggunakan auto click otomatis untuk akun nomor {index}? (y/n): ")
         if confirm_auto_click.lower() == 'y':
             auto_click(tg_info)
-            
-            # Pastikan headers tidak mengandung token setelah selesai dengan akun saat ini
             if 'authorization' in headers:
                 del headers['authorization']
 
-        # 5. Auto lotre untuk akun ini
-        lotre(tg_info)
+          # 5. Konfirmasi Lotre
+        user_info = user_detail(tg_info)
+        if user_info:
+            remain_lottery_count = user_info['data']['lottery_info']['remain_lottery_count']
+            if remain_lottery_count > 0:
+                confirm_lotre = input(Fore.WHITE + f"Apakah Anda ingin melakukan lotre untuk akun nomor {index}? (y/n): ")
+                if confirm_lotre.lower() == 'y':
+                    print(f"{Fore.WHITE}Melakukan lotre untuk akun nomor {index}...\n")
+                    lotre(tg_info)
+                else:
+                    print(f"{Fore.YELLOW}Lotre dibatalkan untuk akun nomor {index}.{Fore.RESET}")
+            else:
+                print(f"{Fore.RED}Not enough lottery attempts remaining ({remain_lottery_count}) for account number {index}.{Fore.RESET}")
+        else:
+            print(f"{Fore.RED}Failed to fetch user details for account number {index}.{Fore.RESET}")
 
-        # Tambahkan delay 5 detik sebelum melanjutkan ke akun berikutnya
+        # Wait 5 seconds before proceeding to the next account
         print(Fore.WHITE + f"Menunggu 5 detik sebelum melanjutkan ke akun nomor {index} berikutnya...\n")
         time.sleep(5)
 
