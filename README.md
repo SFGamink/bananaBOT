@@ -5,7 +5,7 @@ Link Bot : [Banana](https://t.me/OfficialBananaBot/banana?startapp=referral=Q1NF
 # Fitur BOT :
 
 - Auto Clear Task
-- Auto Claim Token Lottery ( SOON )
+- Auto Claim Token Lottery
 - Auto Click
 - Auto Lottery
 - Multiakun ( insyaallah )
