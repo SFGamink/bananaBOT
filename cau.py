@@ -2,7 +2,7 @@ import os
 import time
 import requests
 import json
-from colorama import init, Fore
+from colorama import init, Fore, Style
 
 # Initialize colorama
 init(autoreset=True)
@@ -227,6 +227,17 @@ def lotre(tg_info):
         except requests.exceptions.RequestException as e:
             print(f"{Fore.RED}Error during lottery action: {e}{Fore.RESET}")
 
+def print_welcome_message():
+    """Function to print a welcome message."""
+    print(r"""      
+
+▒█▀▀▀█ █▀▀█ ░█▀█░ ▒█▄░▒█ 
+░▀▀▀▄▄ ░░▀▄ █▄▄█▄ ▒█▒█▒█ 
+▒█▄▄▄█ █▄▄█ ░░░█░ ▒█░░▀█
+          """)
+    print(Fore.GREEN + Style.BRIGHT + "Banana BOT")
+    print(Fore.RED + Style.BRIGHT + "Jangan di edit la bang :)\n\n")
+
 def main():
     tg_info_list = read_tginfo_from_file()
     if not tg_info_list:
@@ -238,9 +249,10 @@ def main():
     # Proses setiap akun dengan nomor urut
     for index, tg_info in enumerate(tg_info_list, start=1):
         clear_screen()
+        print_welcome_message()
         
         # 1. Tanyakan apakah ingin melakukan clear task
-        confirm_clear = input(Fore.BLACK + f"Apakah Anda ingin melakukan clear task otomatis untuk akun nomor {index}? (y/n): ")
+        confirm_clear = input(Fore.WHITE + f"Apakah Anda ingin melakukan clear task otomatis untuk akun nomor {index}? (y/n): ")
         if confirm_clear.lower() == 'y':
             auth_response = auth(tg_info)
             if auth_response:
@@ -268,7 +280,7 @@ def main():
                 print(f"{Fore.RED}Authentication failed for account number {index}.{Fore.RESET}")
 
         # 3. Tampilkan detail akun
-        print(Fore.BLACK + f"\n=============== Detail akun nomor {index} : ===============\n")
+        print(Fore.WHITE + f"\n=============== Detail akun nomor {index} : ===============\n")
         auth_response = auth(tg_info)
         if auth_response:
             user_info = user_detail(tg_info)
@@ -291,17 +303,17 @@ def main():
 
         if index in account_details:
             details = account_details[index]
-            print(Fore.BLACK + f"Username    : {details['username']}")
-            print(Fore.BLACK + f"Peel        : {details['peel']}")
-            print(Fore.BLACK + f"Banana Name : {details['banana_name']}")
-            print(Fore.BLACK + f"Daily Limit : {details['daily_limit']}")
-            print(Fore.BLACK + f"Lotre       : {details['lotre']}")
-            print((Fore.BLACK + f"\n=============== Auto Click ===============\n"))
+            print(Fore.WHITE + f"Username    : {details['username']}")
+            print(Fore.WHITE + f"Peel        : {details['peel']}")
+            print(Fore.WHITE + f"Banana Name : {details['banana_name']}")
+            print(Fore.WHITE + f"Daily Limit : {details['daily_limit']}")
+            print(Fore.WHITE + f"Lotre       : {details['lotre']}")
+            print((Fore.WHITE + f"\n=============== Auto Click ===============\n"))
         else:
             print(Fore.RED + f"No account details to display for account number {index}.{Fore.RESET}")
 
         # 4. Tanyakan apakah ingin melakukan auto click untuk akun ini
-        confirm_auto_click = input(Fore.BLACK + f"Apakah Anda ingin menggunakan auto click otomatis untuk akun nomor {index}? (y/n): ")
+        confirm_auto_click = input(Fore.WHITE + f"Apakah Anda ingin menggunakan auto click otomatis untuk akun nomor {index}? (y/n): ")
         if confirm_auto_click.lower() == 'y':
             auto_click(tg_info)
             
@@ -313,7 +325,7 @@ def main():
         lotre(tg_info)
 
         # Tambahkan delay 5 detik sebelum melanjutkan ke akun berikutnya
-        print(Fore.BLACK + f"Menunggu 5 detik sebelum melanjutkan ke akun nomor {index} berikutnya...\n")
+        print(Fore.WHITE + f"Menunggu 5 detik sebelum melanjutkan ke akun nomor {index} berikutnya...\n")
         time.sleep(5)
 
 if __name__ == "__main__":
